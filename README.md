@@ -1,2 +1,2 @@
 # NNT
-Number needed to treat with confidence interval
+Computation of number needed to treat and associated confidence interval
