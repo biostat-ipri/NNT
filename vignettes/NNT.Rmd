@@ -1,0 +1,145 @@
+---
+title: The R package NNT
+subtitle: Computation of Number Needed to Treat and confidence interval
+author: Gilles Guillot and Cécile Pizot
+date: "`r Sys.Date()`"
+# output: rmarkdown::html_vignette
+abstract: This vignette introduces briefly  the R package NNT for interval estimation of the Number Needed to Treat. A shiny app providing a graphical interfact can be found on [https://i-pri.shinyapps.io/CI_NNT/](https://i-pri.shinyapps.io/CI_NNT/). This is a companion program to the article _Efforts needed for preventing breast and colorectal cancer through changes in dietary patterns_ [@NNT_Mullie_2020].
+output:
+  #rmarkdown::html_vignette:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+header-includes:
+   - \usepackage{setspace}
+   - \onehalfspacing
+   - \usepackage{manfnt}
+bibliography: 
+ - /home/gilles/Dropbox/com/bibtex/biblio.bib
+ - /home/gilles/Dropbox/com/bibtex/gilles.bib 
+# - ./biblio.bib
+# - ./gilles.bib
+vignette: >
+  %\VignetteIndexEntry{Dose-response analysis of mixture data with the model deviation ratio method.}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  background=col2rgb("cornsilk3"),
+  highlight = TRUE
+)
+```
+
+```{r setup, echo=FALSE}
+library(MDR)
+library(ggplot2)
+library(gridExtra)
+# library(bookdown)
+```
+
+# Method
+
+
+## Number needed to treat
+
+For a group of $n$ persons following a treatment with associated absolute risk $p_A$, the expected number of cases is $n\times p_A$. 
+For the same group of $n$ persons, a change from treatment $A$ with absolute risk $p_A$ to treatment $B$ with associated risk $p_B$ will induce a change in the number of cases of $n \times (p_A - p_B)$. The number of persons needed to treat (NNT) is defined as the inverse of absolute risk reduction and represent the number of persons to treat that will induce a reduction in expected number of cases of one unit. 
+
+
+## Confidence intervals for the absolute risk reduction
+
+The absolute risk reduction ($ARR$) is defined as the difference $p_A - p_B$. Computing an interval prediction for a difference in proportion is a classical problem in biostatistics. 
+ @newcombe1998interval reviewed eleven methods to achieve this task and concluded that a method based on the Wilson score [@wilson1927probable] appears to be the best trade-off between computational convenienence and accuracy. 
+We therefore employed the Wilson score method to derive a $(1-\alpha)$  confidence interval   for absolute risk reduction, which brings [reprinted from @bender2001calculating, Eqs 3 and 4]  $CI^{ARR}_{1-\alpha} = [L^{ARR};U^{ARR}]$  with:
+$$L^{ARR} = p_A - p_B - \delta \;\;  \mbox{ and }  \;\; U^{ARR} = p_A - p_B + \varepsilon $$
+where
+$$\delta=\sqrt{(p_A-l_A)^2+(u_B-p_B)^2}  \;\;  \mbox{ and }  \;\; \varepsilon = \sqrt{(u_A-p_A)^2+(p_B-l_B)^2}$$
+
+$$l_i = \varphi_i - \sqrt{\varphi_i^2-\psi_i}   \;\;  \mbox{ and }  \;\;  u_i =\varphi_i + \sqrt{\varphi_i^2-\psi_i} $$
+$$\varphi_i =  \frac{2e_i+z_{1-\alpha/2}^2}{2(n_i+z_{1-\alpha/2}^2)}    \;\;  \mbox{ and }  \;\; \psi_i =  \frac{e_i^2}{n_i^2+n_i z_{1-\alpha/2}^2}$$
+
+## Confidence interval for the number needed to treat 
+
+As noted e.g. by @altman1998confidence and @bender2001calculating, if $CI^{ARR}_{1-\alpha} = [L;U]$ is a $(1-\alpha)$ confidence interval for $ARR$, then a $(1-\alpha)$ confidence interval for $NNT$ can be obtained as
+
+\begin{equation}\label{CI1}
+CI^{NNT}_{1-\alpha} = [1/U;1/L] \;\; \mbox{ if } \;\; [L;U]  \mbox{ does not contain } 0
+\end{equation} and 
+
+\begin{equation}\label{CI2}
+CI^{NNT}_{1-\alpha} = (-\infty;1/L] \cup [1/U;+\infty) \mbox{ if } \;\; [L;U]  \mbox{ contains } 0 \, ,
+\end{equation}
+negative values for NNT being often referred to as number needed to harm [@hutton2000number].
+
+# Package overview
+
+The NNT package consists of a single function called `compute_NNT` taking as input
+
+* `e`: a bivariate numeric vector of counts of events in the two treatment groups
+* `n`: a bivariate numeric vector of size of the two treatment groups
+* `alpha`: a numeric value between 0 and 1 so as to obtain $1-\alpha$ confidence interval
+
+ It returns a list whose elements include point estimates of ARR, NNT and 1-alpha confidence intervals.
+
+# Coverage study
+
+
+To further assess the accuracy of the Wilson score method, we carried out a small simulation study as follows: 
+We drew Monte Carlo simulations of pairs of cases $(e_A,e_B)$ from binomial distributions $B(n_A,p_A)$ and $B(n_B,p_B)$. 
+For each simulated pair $(e_A,e_B)$, we computed the confidence interval for the NNT using the Wilson score method. 
+Replicating this procedure 1000 times, we computed the coverage, namely the proportion of confidence intervals containing the true risk reduction, cf code below. 
+We compared the  coverage to the nominal level of the confidence intervals on various sets of risk and various sets of nominal levels.
+
+
+```{r,echo=FALSE}
+source('../R/compute_NNT.R')
+```
+
+```{r}
+cover = function(p1,p2,n,nrep,alpha)
+{
+  nnt = 1/(p1-p2)
+  ncov=0
+  for(irep in 1:nrep)
+  {
+    e = rbinom(n=2,p=c(p1,p2),size=n)
+    res_ci = compute_NNT(e,n,alpha = alpha)
+    if(!is.na(res_ci$LL_NNT))
+    { 
+      if( (nnt > res_ci$LL_NNT) & (nnt < res_ci$UL_NNT))  ncov = ncov+1
+    }else
+    {
+      if( (nnt < res_ci$UL_NNT_neg) | (nnt > res_ci$LL_NNT_pos)) ncov = ncov+1
+    }
+  }
+  ncov/nrep
+}
+```
+
+
+
+We get the table below, showing that  for values investigated, the method seems quite accurate. Note that in the last two rows, $p_A$ and $p_B$ are  picked 
+from actual data reported by @farvid2016fruit.
+
+$p_A$ | $p_B$ | NNT              | $n_A$ $n_B$   | $1-\alpha$ | Coverage
+-----|------|------------------|-------------|----------|----------
+1/5 | 1/10  | `r 1/(1/5-1/10)` | 1000        | 0.95     | `r signif(cover(p1=1/5,p2=1/10,n=rep(1000,2),nrep=10000,alpha=0.05),dig=3)`
+1/10| 1/5   | `r 1/(1/10-1/5)` | 1000        | 0.95     | `r signif(cover(p1=1/10,p2=1/5,n=rep(1000,2),nrep=10000,alpha=0.05),dig=3)`
+1/5 | 1/10  | `r 1/(1/5-1/10)` | 1000        | 0.99     | `r signif(cover(p1=1/5,p2=1/10,n=rep(1000,2),nrep=10000,alpha=0.01),dig=3)`
+1/10| 1/5   | `r 1/(1/10-1/5)` | 1000        | 0.99     | `r signif(cover(p1=1/10,p2=1/5,n=rep(1000,2),nrep=10000,alpha=0.01),dig=3)`
+1/5 | 1/10  | `r 1/(1/5-1/10)` | 1000        | 0.9      | `r signif(cover(p1=1/5,p2=1/10,n=rep(1000,2),nrep=10000,alpha=0.1),dig=3)`
+1/5 | 1/10  | `r 1/(1/5-1/10)` | 100         | 0.95     | `r signif(cover(p1=1/5,p2=1/10,n=rep(1000,2),nrep=10000,alpha=0.05),dig=3)`
+1/5 | 1/10  | `r 1/(1/5-1/10)` | 50          | 0.95     | `r signif(cover(p1=1/5,p2=1/10,n=rep(1000,2),nrep=10000,alpha=0.05),dig=3)`
+1/1000 | 1/2000  | `r 1/(1/1000-1/2000)` | 10000        | 0.95     | `r signif(cover(p1=1/10,p2=2/10,n=rep(1000,2),nrep=10000,alpha=0.05),dig=3)`
+`r signif(315/134534,dig=3)` | `r signif(263/134375,dig=3)` | `r round(1/(315/134534 - 263/134375))` | 134535 134375 | 0.95 | `r signif(cover(p1=315/134534,p2=263/134375,n=c(134535,134375),nrep=10000,alpha=0.05),dig=3)`
+`r signif(236/134375,dig=3)` | `r signif(250/134590,dig=3)` | 10028 | 134375 134590 | 0.95 | `r signif(cover(p1=315/134375,p2=263/134590,n=c(134375,134590),nrep=10000,alpha=0.05),dig=3)`
+
+
+
+
+# References
