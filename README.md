@@ -31,4 +31,4 @@ vignette('NNT')
 ```
 ## Shiny app
 
-A shiny app providing a graphical interfact can be found on [https://i-pri.shinyapps.io/NNT_app/](https://i-pri.shinyapps.io/NNT_app/)
+A shiny app providing a graphical interface can be found on [https://i-pri.shinyapps.io/NNT_app/](https://i-pri.shinyapps.io/NNT_app/)
