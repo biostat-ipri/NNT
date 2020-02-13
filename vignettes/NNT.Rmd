@@ -4,7 +4,7 @@ subtitle: Computation of Number Needed to Treat and confidence interval
 author: Gilles Guillot and Cécile Pizot
 date: "`r Sys.Date()`"
 # output: rmarkdown::html_vignette
-abstract: This vignette introduces briefly  the R package NNT for interval estimation of the Number Needed to Treat. A shiny app providing a graphical interfact can be found on [https://i-pri.shinyapps.io/CI_NNT/](https://i-pri.shinyapps.io/CI_NNT/). This is a companion program to the article _Efforts needed for preventing breast and colorectal cancer through changes in dietary patterns_ [@NNT_Mullie_2020].
+abstract: This vignette introduces briefly  the R package NNT for interval estimation of the Number Needed to Treat. A shiny app providing a graphical interfact can be found on [https://i-pri.shinyapps.io/NNT_app/](https://i-pri.shinyapps.io/NNT_app/). This is a companion program to the article _Efforts needed for preventing breast and colorectal cancer through changes in dietary patterns_ [@NNT_Mullie_2020].
 output:
   #rmarkdown::html_vignette:
   pdf_document:

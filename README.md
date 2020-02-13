@@ -29,3 +29,6 @@ The vignette can be accessed through
 ```{r eval=FALSE}
 vignette('NNT')
 ```
+## Shiny app
+
+A shiny app providing a graphical interfact can be found on [https://i-pri.shinyapps.io/NNT_App/](https://i-pri.shinyapps.io/NNT_App/)
