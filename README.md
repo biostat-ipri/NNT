@@ -12,13 +12,13 @@ To install the package under R, type
 
 ```{r eval=FALSE}
 if(! ('devtools' %in% installed.packages())) install.packages('devtools')
-devtools::install_github('gilles-guillot/NNT')
+devtools::install_github('biostat-ipri/NNT')
 ```
 
 In order to install a local copy of the package vignette (short documenation) use:
 
 ```{r eval=FALSE}
-devtools::install_github('gilles-guillot/NNT',build_vignette=TRUE)
+devtools::install_github('biostat-ipri/NNT',build_vignette=TRUE)
 ```
 
 ## Documentation
